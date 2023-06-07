@@ -91,7 +91,13 @@ if __name__ == "__main__":
     # Data Preparation
     bert_model, bert_vocab = init_bert_model(args.model_name)
     train_path, dev_path = args.train_data, args.dev_data
-    data = Data(train_path, dev_path, bert_vocab, args.seq_max_len, args.tgt_vocab_f, args.tgt_vocab_size)
+    import pickle as pkl
+    if not os.path.exists('./data.pkl'):
+        data = Data(train_path, dev_path, bert_vocab, args.seq_max_len, args.tgt_vocab_f, args.tgt_vocab_size)
+        pkl.dump(data, open('./data.pkl', 'wb'))
+    else:
+        data = pkl.load(open('./data.pkl', 'rb'))
+    
     vocab_size = data.tgt_vocab_size
     print ('Vocabulary Size is %d' % vocab_size)
     print ('data is ready')
