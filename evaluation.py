@@ -3,7 +3,7 @@ def get_one_line_result(line):
     return float(line.strip().split()[3]) * 100
     
 def get_rouge_scores(summary_dir, model_dir):
-    r = Rouge155()
+    r = Rouge155('/home/chenyang/git_repos/NAG-BERT/ROUGE-1.5.5')
     r.system_dir = summary_dir
     r.model_dir = model_dir
     r.system_filename_pattern = r'(\d+)_decoded.txt'
