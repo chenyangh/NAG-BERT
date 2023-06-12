@@ -66,6 +66,7 @@ if __name__ == '__main__':
 
     reference = []
     hypothesis = []
+    source = []
 
     total_millisecond_cnt = 0.0
     total_token_cnt = 0
@@ -76,12 +77,13 @@ if __name__ == '__main__':
                 print ('%d instances have been processed' % dev_step)
                 
             is_training = False
-            dev_batch_src_inp, dev_batch_tgt, dev_batch_truth = data.get_next_batch(1, mode = 'dev')
+            dev_batch_src_inp, dev_batch_tgt, dev_batch_truth, src_token_list = data.get_next_batch(1, mode = 'test')
 
             dev_batch_src_inp = torch.LongTensor(dev_batch_src_inp).cuda(device)
             dev_batch_tgt = torch.LongTensor(dev_batch_tgt).cuda(device)
             reference += dev_batch_truth 
-
+            source += [' '.join(x).replace(' ##', '').replace('##', '') for x in src_token_list ]
+            
             _, one_tgt_len = dev_batch_tgt.size()
 
             # evaluate BLEU score
@@ -99,16 +101,24 @@ if __name__ == '__main__':
             dev_batch_hypothesis = map_text(dev_batch_result, data)
             hypothesis += dev_batch_hypothesis
 
-    write_results(summary_dir, hypothesis, mode = r'decoded')
-    # write reference result
-    write_results(model_dir, reference, mode = r'reference')
-    # compute score
-    rogue_1_score, rogue_2_score, rogue_l_score = get_rouge_scores(summary_dir, model_dir)
-    print ('rogue 1 is %.5f, rogue 2 is %.5f, rogue l is %.5f' % (rogue_1_score, rogue_2_score, rogue_l_score))
+    src_file = open(f'src.txt', 'w')
+    hyp_file = open(f'hyp.txt', 'w')
+    ref_file = open(f'ref.txt', 'w')
+    
+    src_file.write('\n'.join(source))
+    hyp_file.write('\n'.join(hypothesis))
+    ref_file.write('\n'.join(reference))
+    
+    # write_results(summary_dir, hypothesis, mode = r'decoded')
+    # # write reference result
+    # write_results(model_dir, reference, mode = r'reference')
+    # # compute score
+    # rogue_1_score, rogue_2_score, rogue_l_score = get_rouge_scores(summary_dir, model_dir)
+    # print ('rogue 1 is %.5f, rogue 2 is %.5f, rogue l is %.5f' % (rogue_1_score, rogue_2_score, rogue_l_score))
 
-    ave_token_time = round(total_millisecond_cnt / total_token_cnt, 3)
-    ave_instance_time = round(total_millisecond_cnt / token_instance_cnt, 3)
-    print ('Total Decoding Time is %.5f, Average token time is %.5f, instance time is %.5f' 
-        % (total_millisecond_cnt, ave_token_time, ave_instance_time))
+    # ave_token_time = round(total_millisecond_cnt / total_token_cnt, 3)
+    # ave_instance_time = round(total_millisecond_cnt / token_instance_cnt, 3)
+    # print ('Total Decoding Time is %.5f, Average token time is %.5f, instance time is %.5f' 
+    #     % (total_millisecond_cnt, ave_token_time, ave_instance_time))
 
 

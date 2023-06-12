@@ -169,6 +169,8 @@ class Data:
     def get_next_batch(self, batch_size, mode):
         batch_inp_list, batch_tgt_list, batch_truth_list = [], [], []
 
+        batch_inp_token_list = []
+        
         if mode == 'train':
             if self.train_current_idx + batch_size < self.train_num - 1:
                 for i in range(batch_size):
@@ -264,11 +266,57 @@ class Data:
                     assert len(one_inp_token_list) >= len(one_tgt_token_list)
                 self.dev_current_idx = 0
                 #self.shuffle_dev_idx()
+        elif mode == 'test':
+            if self.dev_current_idx + batch_size < self.dev_num - 1:
+                for i in range(batch_size):
+                    curr_idx = self.dev_current_idx + i
+
+                    one_inp_token_list = self.dev_article_list[curr_idx]
+                    batch_inp_token_list.append(one_inp_token_list)
+                    
+                    one_inp_token_list = [CLS] + one_inp_token_list + [SEP]
+                    batch_inp_list.append(self.vocab.convert_tokens_to_ids(one_inp_token_list))
+
+                    one_tgt_token_list = self.dev_title_list[curr_idx]
+                    batch_truth_list.append(' '.join(one_tgt_token_list).strip())
+
+                    one_tgt_token_list = one_tgt_token_list + [EOS] + [EOS]
+                    batch_tgt_list.append(self.tgt_vocab.tokentoidx(one_tgt_token_list))
+                    assert len(one_inp_token_list) >= len(one_tgt_token_list)
+                self.dev_current_idx += batch_size
+            else:
+                for i in range(batch_size):
+                    curr_idx = self.dev_current_idx + i
+                    if curr_idx > self.dev_num - 1: # 对dev_current_idx重新赋值
+                        curr_idx = 0
+                        self.dev_current_idx = 0
+                    else:
+                        pass
+
+                    one_inp_token_list = self.dev_article_list[curr_idx]
+                    batch_inp_token_list.append(one_inp_token_list)
+                    
+                    one_inp_token_list = [CLS] + one_inp_token_list + [SEP]
+                    batch_inp_list.append(self.vocab.convert_tokens_to_ids(one_inp_token_list))
+
+                    one_tgt_token_list = self.dev_title_list[curr_idx]
+                    batch_truth_list.append(' '.join(one_tgt_token_list).strip())
+
+                    one_tgt_token_list = one_tgt_token_list + [EOS] + [EOS]
+                    batch_tgt_list.append(self.tgt_vocab.tokentoidx(one_tgt_token_list))
+                    assert len(one_inp_token_list) >= len(one_tgt_token_list)
+                self.dev_current_idx = 0
+                #self.shuffle_dev_idx()     
         else:
             raise Exception('Wrong batch mode!!!')
 
         max_len = max([len(item) for item in batch_inp_list])
         batch_src_inp_pad = self.pad_data(batch_inp_list, max_len, self.src_padding_idx)
         batch_tgt_inp_pad = self.pad_data(batch_tgt_list, max_len, self.tgt_padding_idx)
-        return batch_src_inp_pad, batch_tgt_inp_pad, batch_truth_list
+        
+        if mode == 'test':
+            return batch_src_inp_pad, batch_tgt_inp_pad, batch_truth_list, batch_inp_token_list
+        else:
+            return batch_src_inp_pad, batch_tgt_inp_pad, batch_truth_list
+        
 
